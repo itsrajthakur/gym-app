@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE TABLE IF NOT EXISTS attendance (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    check_in_at TEXT NOT NULL
+    check_in_at TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'desk' CHECK (source IN ('self', 'desk'))
 );
 
 CREATE TABLE IF NOT EXISTS gym_classes (
@@ -95,8 +96,34 @@ CREATE TABLE IF NOT EXISTS workout_logs (
     notes TEXT
 );
 
+CREATE TABLE IF NOT EXISTS ad_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    duration_days INTEGER NOT NULL CHECK (duration_days > 0),
+    price REAL NOT NULL CHECK (price >= 0),
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS advertisements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    advertiser_name TEXT NOT NULL,
+    advertiser_phone TEXT,
+    title TEXT NOT NULL,
+    body TEXT,
+    image_path TEXT,
+    link_url TEXT,
+    plan_id INTEGER NOT NULL REFERENCES ad_plans(id),
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'expired')),
+    amount REAL NOT NULL CHECK (amount >= 0),
+    method TEXT NOT NULL CHECK (method IN ('cash', 'card', 'upi')),
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_memberships_user ON memberships(user_id, start_date);
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id, paid_at);
 CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance(user_id, check_in_at);
 CREATE INDEX IF NOT EXISTS idx_bookings_session ON class_bookings(class_id, session_date, status);
 CREATE INDEX IF NOT EXISTS idx_workout_logs_user ON workout_logs(user_id, logged_on);
+CREATE INDEX IF NOT EXISTS idx_ads_status ON advertisements(status, end_date);

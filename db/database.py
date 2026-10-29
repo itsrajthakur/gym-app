@@ -56,13 +56,21 @@ def execute_many(sql: str, seq_of_params: list[tuple]) -> None:
         conn.executemany(sql, seq_of_params)
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    attendance_cols = {row[1] for row in conn.execute("PRAGMA table_info(attendance)")}
+    if "source" not in attendance_cols:
+        conn.execute("ALTER TABLE attendance ADD COLUMN source TEXT NOT NULL DEFAULT 'desk'")
+
+
 def init_db() -> None:
     schema = SCHEMA_PATH.read_text(encoding="utf-8")
     with get_conn() as conn:
         conn.executescript(schema)
-    from db.seed import seed_if_empty
+        _migrate(conn)
+    from db.seed import seed_ad_plans_if_empty, seed_if_empty
 
     seed_if_empty()
+    seed_ad_plans_if_empty()
 
 
 def expire_memberships() -> None:

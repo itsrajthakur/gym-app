@@ -11,6 +11,7 @@ STATUS_COLORS = {
     "active": "green",
     "expired": "red",
     "frozen": "orange",
+    "paused": "orange",
     "booked": "blue",
     "attended": "green",
     "cancelled": "red",
@@ -20,6 +21,7 @@ STATUS_ICONS = {
     "active": ":material/check_circle:",
     "expired": ":material/event_busy:",
     "frozen": ":material/ac_unit:",
+    "paused": ":material/pause_circle:",
     "booked": ":material/event_available:",
     "attended": ":material/how_to_reg:",
     "cancelled": ":material/cancel:",
@@ -161,6 +163,51 @@ def initials(name: str) -> str:
 def person_title(name: str, role: str | None = None) -> None:
     icon = ROLE_ICONS.get(role or "member", ":material/person:")
     st.markdown(f"{icon} **{name}**")
+
+
+def render_self_checkin(
+    user_id: int,
+    allowed: bool,
+    reason: str,
+    key_prefix: str,
+    *,
+    show_block_reason: bool = True,
+) -> None:
+    from services.attendance import check_in, check_in_time, todays_check_in
+
+    visit = todays_check_in(user_id)
+    if visit:
+        st.success(
+            f"Checked in at {check_in_time(visit)}.",
+            icon=":material/check_circle:",
+        )
+        return
+    if not allowed:
+        if show_block_reason and reason:
+            st.warning(reason, icon=":material/warning:")
+        st.button(
+            "Check in",
+            type="primary",
+            disabled=True,
+            icon=":material/block:",
+            key=f"{key_prefix}_disabled",
+        )
+        return
+    confirm_key = f"{key_prefix}_confirm"
+    if st.session_state.get(confirm_key):
+        st.warning("Confirm you are at the gym now?", icon=":material/warning:")
+        yes, no = st.columns(2)
+        if yes.button("Yes, I am here", type="primary", key=f"{key_prefix}_yes", icon=":material/how_to_reg:"):
+            st.session_state.pop(confirm_key, None)
+            ok, message = check_in(user_id, source="self")
+            set_flash(message, "success" if ok else "error")
+            st.rerun()
+        if no.button("Not now", key=f"{key_prefix}_no", icon=":material/close:"):
+            st.session_state.pop(confirm_key, None)
+            st.rerun()
+    elif st.button("Check in", type="primary", key=f"{key_prefix}_start", icon=":material/login:"):
+        st.session_state[confirm_key] = True
+        st.rerun()
 
 
 def membership_panel(membership: dict, member_name: str | None = None) -> None:

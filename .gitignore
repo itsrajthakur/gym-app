@@ -4,4 +4,6 @@ __pycache__/
 .streamlit/secrets.toml
 data/gym.db
 data/*.db
+data/ads/*
+!data/ads/.gitkeep
 .DS_Store

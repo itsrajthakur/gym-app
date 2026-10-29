@@ -1,6 +1,7 @@
 import streamlit as st
 
 from db.database import expire_memberships, init_db
+from services.ads import expire_ads, render_member_ads
 from services.ui import ROLE_ICONS, inject_css, show_brand
 
 st.set_page_config(
@@ -11,6 +12,7 @@ st.set_page_config(
 
 init_db()
 expire_memberships()
+expire_ads()
 inject_css()
 show_brand()
 st.session_state.setdefault("user", None)
@@ -42,6 +44,8 @@ if role == "admin":
             st.Page("views/admin_payments.py", title="Payments", icon=":material/payments:"),
             st.Page("views/admin_attendance.py", title="Attendance", icon=":material/how_to_reg:"),
             st.Page("views/admin_classes.py", title="Classes", icon=":material/calendar_month:"),
+            st.Page("views/admin_ads.py", title="Ads", icon=":material/campaign:"),
+            st.Page("views/admin_ad_plans.py", title="Ad plans", icon=":material/sell:"),
         ]
     }
 elif role == "trainer":
@@ -53,6 +57,7 @@ elif role == "trainer":
 elif role == "member":
     navigation = [
         st.Page("views/member_home.py", title="Home", icon=":material/home:", default=True),
+        st.Page("views/member_checkin.py", title="Check in", icon=":material/how_to_reg:"),
         st.Page("views/member_classes.py", title="Classes", icon=":material/event:"),
         st.Page("views/member_workouts.py", title="Workouts", icon=":material/exercise:"),
         st.Page("views/member_profile.py", title="Profile", icon=":material/person:"),
@@ -62,4 +67,6 @@ else:
     st.stop()
 
 page = st.navigation(navigation, position="sidebar")
+if role == "member":
+    render_member_ads(page.title)
 page.run()

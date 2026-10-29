@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from services.attendance import check_in, todays_attendance
+from services.attendance import check_in, source_label, todays_attendance
 from services.members import list_members
 from services.ui import empty, flash, page_header, set_flash, show_image
 
@@ -19,7 +19,7 @@ else:
         st.markdown("### :material/login: Front desk")
         member = st.selectbox("Member", members, format_func=lambda m: f"{m['name']} · {m['email']}")
         if st.button("Check in", type="primary", icon=":material/login:"):
-            ok, message = check_in(member["id"])
+            ok, message = check_in(member["id"], source="desk")
             set_flash(message, "success" if ok else "error")
             st.rerun()
 
@@ -30,7 +30,15 @@ if not rows:
 else:
     st.dataframe(
         pd.DataFrame(
-            [{"Time": r["check_in_at"], "Member": r["name"], "Email": r["email"]} for r in rows]
+            [
+                {
+                    "Time": r["check_in_at"],
+                    "Member": r["name"],
+                    "Email": r["email"],
+                    "Source": source_label(r.get("source")),
+                }
+                for r in rows
+            ]
         ),
         hide_index=True,
         width="stretch",

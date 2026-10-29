@@ -208,6 +208,21 @@ def seed_if_empty() -> None:
     )
 
 
+def seed_ad_plans_if_empty() -> None:
+    row = fetch_one("SELECT COUNT(*) AS n FROM ad_plans")
+    if row and row["n"] > 0:
+        return
+    execute_many(
+        "INSERT INTO ad_plans (name, duration_days, price, description) VALUES (?, ?, ?, ?)",
+        [
+            ("1 Day", 1, 199.0, "Banner on member pages for one day."),
+            ("1 Week", 7, 999.0, "Banner on member pages for seven days."),
+            ("1 Month", 30, 2999.0, "Banner on member pages for 30 days."),
+            ("1 Year", 365, 24999.0, "Banner on member pages for a full year."),
+        ],
+    )
+
+
 def _all(sql: str) -> list[dict]:
     with get_conn() as conn:
         return [dict(row) for row in conn.execute(sql).fetchall()]

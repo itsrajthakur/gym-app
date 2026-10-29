@@ -1,8 +1,9 @@
 import streamlit as st
 
+from services.attendance import check_in_time, todays_check_in
 from services.classes import next_booking_for_member
 from services.members import current_membership, membership_access
-from services.ui import class_icon, empty, flash, membership_panel, page_header, show_class_art
+from services.ui import class_icon, empty, flash, membership_panel, page_header, render_self_checkin, show_class_art
 from services.workouts import latest_log, latest_plan
 
 flash()
@@ -21,6 +22,15 @@ if membership:
         st.warning(reason, icon=":material/warning:")
 else:
     st.warning(reason, icon=":material/info:")
+
+with st.container(border=True):
+    st.subheader(":material/how_to_reg: Today's visit")
+    visit = todays_check_in(user["id"])
+    if visit:
+        st.markdown(":material/check_circle: **Checked in**")
+        st.caption(f"You are on today's gym register at {check_in_time(visit)}.")
+    else:
+        render_self_checkin(user["id"], allowed, reason, "checkin_home", show_block_reason=False)
 
 col_a, col_b = st.columns(2)
 with col_a:
